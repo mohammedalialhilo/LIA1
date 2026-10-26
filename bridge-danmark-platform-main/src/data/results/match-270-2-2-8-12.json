@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "0.1",
+  "tournament": {
+    "id": 270,
+    "name": "Divisionsturneringen 2026/2027",
+    "type": "division",
+    "season": "2026/2027",
+    "organizerClubNo": 5000,
+    "status": "ongoing",
+    "sourceRefs": { "resultXml": { "organizerFolder": "5000", "tournamentId": 270 } }
+  },
+  "division": {
+    "id": 2,
+    "tournamentId": 270,
+    "slug": "2-division",
+    "name": "2. division",
+    "sourceRefs": { "resultXml": { "section": 2 } }
+  },
+  "round": {
+    "tournamentId": 270,
+    "divisionId": 2,
+    "number": 2,
+    "name": "Kamp 2",
+    "date": "2026-10-03",
+    "startTime": "19:30",
+    "endTime": "23:30",
+    "timeZone": "Europe/Copenhagen"
+  },
+  "match": {
+    "id": "270-2-2-8-12",
+    "tournamentId": 270,
+    "divisionId": 2,
+    "roundNumber": 2,
+    "status": "finished",
+    "scoring": { "method": "IMP", "vpScale": null },
+    "homeTeam": {
+      "id": "270-2-8",
+      "teamNumber": 8,
+      "name": "Malerfirmaet Nielsen & Justesen",
+      "imp": 97,
+      "vp": 10.39,
+      "players": []
+    },
+    "awayTeam": {
+      "id": "270-2-12",
+      "teamNumber": 12,
+      "name": "Michael Beck",
+      "imp": 95,
+      "vp": 9.61,
+      "players": [
+        {
+          "dbfNo": 23264,
+          "name": "Michael Beck",
+          "pairNumber": 121,
+          "seat": null,
+          "sourceRefs": { "bridgeOrg": { "memberId": 25781 } }
+        }
+      ]
+    },
+    "winnerTeamNumber": 8,
+    "impDifference": 2,
+    "halves": [
+      { "number": 1, "homeImp": null, "awayImp": null, "boards": [], "sourceRefs": { "bridgeOrg": { "hacTournamentId": 502039 } } },
+      { "number": 2, "homeImp": null, "awayImp": null, "boards": [], "sourceRefs": { "bridgeOrg": { "hacTournamentId": 502045 } } }
+    ],
+    "sourceRefs": {
+      "resultXml": { "file": "5000/MT270GT411.XML", "tournamentId": 270, "section": 2, "round": 2 },
+      "bridgeOrg": { "hacTournamentIds": [502039, 502045] }
+    }
+  },
+  "extensions": { "standings": null, "multiTeam": null, "handicap": null, "masterPoints": null }
+}

@@ -1,0 +1,6 @@
+@DBF_BridgeClubs_REST_MSSQL_HostAddress = http://localhost:5129
+
+GET {{DBF_BridgeClubs_REST_MSSQL_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
