@@ -55,6 +55,7 @@ import { Route as Bc3OnlineClubNumberDashboardRouteImport } from './routes/bc3.o
 import { Route as Bc3OnlineClubNumberStamoplysningerRouteImport } from './routes/bc3.online.$clubNumber.stamoplysninger'
 import { Route as ResultaterDivisionsturneringenDivisionIndexRouteImport } from './routes/resultater.divisionsturneringen.$division.index'
 import { Route as Bc3OnlineClubNumberMedlemmerIndexRouteImport } from './routes/bc3.online.$clubNumber.medlemmer.index'
+import { Route as Bc3OnlineClubNumberMedlemmerTilfoejRouteImport } from './routes/bc3.online.$clubNumber.medlemmer.tilfoej'
 import { Route as Bc3OnlineClubNumberMembersMemberIdRouteImport } from './routes/bc3.online.$clubNumber.members.$memberId'
 import { Route as Bc3OnlineClubNumberSubclubsClubIdRouteImport } from './routes/bc3.online.$clubNumber.subclubs.$clubId'
 import { Route as Bc3OnlineClubNumberUnderklubberIndexRouteImport } from './routes/bc3.online.$clubNumber.underklubber.index'
@@ -300,6 +301,12 @@ const Bc3OnlineClubNumberMedlemmerIndexRoute =
     path: '/bc3/online/$clubNumber/medlemmer/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const Bc3OnlineClubNumberMedlemmerTilfoejRoute =
+  Bc3OnlineClubNumberMedlemmerTilfoejRouteImport.update({
+    id: '/bc3/online/$clubNumber/medlemmer/tilfoej',
+    path: '/bc3/online/$clubNumber/medlemmer/tilfoej',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const Bc3OnlineClubNumberMembersMemberIdRoute =
   Bc3OnlineClubNumberMembersMemberIdRouteImport.update({
     id: '/bc3/online/$clubNumber/members/$memberId',
@@ -377,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/bc3/online/$clubNumber/stamoplysninger': typeof Bc3OnlineClubNumberStamoplysningerRoute
   '/bc3/online/$clubNumber/': typeof Bc3OnlineClubNumberIndexRoute
   '/resultater/divisionsturneringen/$division/': typeof ResultaterDivisionsturneringenDivisionIndexRoute
+  '/bc3/online/$clubNumber/medlemmer/tilfoej': typeof Bc3OnlineClubNumberMedlemmerTilfoejRoute
   '/bc3/online/$clubNumber/members/$memberId': typeof Bc3OnlineClubNumberMembersMemberIdRoute
   '/bc3/online/$clubNumber/subclubs/$clubId': typeof Bc3OnlineClubNumberSubclubsClubIdRoute
   '/resultater/divisionsturneringen/$division/hold/$holdId': typeof ResultaterDivisionsturneringenDivisionHoldHoldIdRoute
@@ -427,6 +435,7 @@ export interface FileRoutesByTo {
   '/bc3/online/$clubNumber/stamoplysninger': typeof Bc3OnlineClubNumberStamoplysningerRoute
   '/bc3/online/$clubNumber': typeof Bc3OnlineClubNumberIndexRoute
   '/resultater/divisionsturneringen/$division': typeof ResultaterDivisionsturneringenDivisionIndexRoute
+  '/bc3/online/$clubNumber/medlemmer/tilfoej': typeof Bc3OnlineClubNumberMedlemmerTilfoejRoute
   '/bc3/online/$clubNumber/members/$memberId': typeof Bc3OnlineClubNumberMembersMemberIdRoute
   '/bc3/online/$clubNumber/subclubs/$clubId': typeof Bc3OnlineClubNumberSubclubsClubIdRoute
   '/resultater/divisionsturneringen/$division/hold/$holdId': typeof ResultaterDivisionsturneringenDivisionHoldHoldIdRoute
@@ -481,6 +490,7 @@ export interface FileRoutesById {
   '/bc3/online/$clubNumber/stamoplysninger': typeof Bc3OnlineClubNumberStamoplysningerRoute
   '/bc3/online/$clubNumber/': typeof Bc3OnlineClubNumberIndexRoute
   '/resultater/divisionsturneringen/$division/': typeof ResultaterDivisionsturneringenDivisionIndexRoute
+  '/bc3/online/$clubNumber/medlemmer/tilfoej': typeof Bc3OnlineClubNumberMedlemmerTilfoejRoute
   '/bc3/online/$clubNumber/members/$memberId': typeof Bc3OnlineClubNumberMembersMemberIdRoute
   '/bc3/online/$clubNumber/subclubs/$clubId': typeof Bc3OnlineClubNumberSubclubsClubIdRoute
   '/resultater/divisionsturneringen/$division/hold/$holdId': typeof ResultaterDivisionsturneringenDivisionHoldHoldIdRoute
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/bc3/online/$clubNumber/stamoplysninger'
     | '/bc3/online/$clubNumber/'
     | '/resultater/divisionsturneringen/$division/'
+    | '/bc3/online/$clubNumber/medlemmer/tilfoej'
     | '/bc3/online/$clubNumber/members/$memberId'
     | '/bc3/online/$clubNumber/subclubs/$clubId'
     | '/resultater/divisionsturneringen/$division/hold/$holdId'
@@ -586,6 +597,7 @@ export interface FileRouteTypes {
     | '/bc3/online/$clubNumber/stamoplysninger'
     | '/bc3/online/$clubNumber'
     | '/resultater/divisionsturneringen/$division'
+    | '/bc3/online/$clubNumber/medlemmer/tilfoej'
     | '/bc3/online/$clubNumber/members/$memberId'
     | '/bc3/online/$clubNumber/subclubs/$clubId'
     | '/resultater/divisionsturneringen/$division/hold/$holdId'
@@ -639,6 +651,7 @@ export interface FileRouteTypes {
     | '/bc3/online/$clubNumber/stamoplysninger'
     | '/bc3/online/$clubNumber/'
     | '/resultater/divisionsturneringen/$division/'
+    | '/bc3/online/$clubNumber/medlemmer/tilfoej'
     | '/bc3/online/$clubNumber/members/$memberId'
     | '/bc3/online/$clubNumber/subclubs/$clubId'
     | '/resultater/divisionsturneringen/$division/hold/$holdId'
@@ -677,6 +690,7 @@ export interface RootRouteChildren {
   Bc3OnlineClubNumberDashboardRoute: typeof Bc3OnlineClubNumberDashboardRoute
   Bc3OnlineClubNumberStamoplysningerRoute: typeof Bc3OnlineClubNumberStamoplysningerRoute
   Bc3OnlineClubNumberIndexRoute: typeof Bc3OnlineClubNumberIndexRoute
+  Bc3OnlineClubNumberMedlemmerTilfoejRoute: typeof Bc3OnlineClubNumberMedlemmerTilfoejRoute
   Bc3OnlineClubNumberMembersMemberIdRoute: typeof Bc3OnlineClubNumberMembersMemberIdRoute
   Bc3OnlineClubNumberSubclubsClubIdRoute: typeof Bc3OnlineClubNumberSubclubsClubIdRoute
   Bc3OnlineClubNumberMedlemmerIndexRoute: typeof Bc3OnlineClubNumberMedlemmerIndexRoute
@@ -1007,6 +1021,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Bc3OnlineClubNumberMedlemmerIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bc3/online/$clubNumber/medlemmer/tilfoej': {
+      id: '/bc3/online/$clubNumber/medlemmer/tilfoej'
+      path: '/bc3/online/$clubNumber/medlemmer/tilfoej'
+      fullPath: '/bc3/online/$clubNumber/medlemmer/tilfoej'
+      preLoaderRoute: typeof Bc3OnlineClubNumberMedlemmerTilfoejRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bc3/online/$clubNumber/members/$memberId': {
       id: '/bc3/online/$clubNumber/members/$memberId'
       path: '/bc3/online/$clubNumber/members/$memberId'
@@ -1147,6 +1168,8 @@ const rootRouteChildren: RootRouteChildren = {
   Bc3OnlineClubNumberStamoplysningerRoute:
     Bc3OnlineClubNumberStamoplysningerRoute,
   Bc3OnlineClubNumberIndexRoute: Bc3OnlineClubNumberIndexRoute,
+  Bc3OnlineClubNumberMedlemmerTilfoejRoute:
+    Bc3OnlineClubNumberMedlemmerTilfoejRoute,
   Bc3OnlineClubNumberMembersMemberIdRoute:
     Bc3OnlineClubNumberMembersMemberIdRoute,
   Bc3OnlineClubNumberSubclubsClubIdRoute:

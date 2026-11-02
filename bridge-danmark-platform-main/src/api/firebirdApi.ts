@@ -72,6 +72,36 @@ export interface MemberClub {
   lastChangedDate: string;
 }
 
+/** /api/Clubs/{fdbNo}/SubClubs/{clubId}/Members */
+export interface ClubMember {
+  memberId: number;
+  clubId: number;
+  memberNo: number | null;
+  name: string | null;
+  address1: string | null;
+  address2: string | null;
+  countryCode: string | null;
+  zipCode: string | null;
+  city: string | null;
+  phone1: string | null;
+  phone2: string | null;
+  phone3: string | null;
+  email: string | null;
+  clubStart: string | null;
+}
+
+export type CreateClubMember = Pick<ClubMember, "name"> &
+  Partial<
+    Pick<
+      ClubMember,
+      "memberNo" | "email" | "phone1" | "address1" | "zipCode" | "city" | "countryCode"
+    >
+  >;
+
+export type UpdateClubMember = Partial<
+  Pick<ClubMember, "name" | "email" | "phone1" | "address1" | "zipCode" | "city" | "countryCode">
+>;
+
 export class Bc3ApiError extends Error {
   status?: number | undefined;
   constructor(message: string, status?: number) {
@@ -96,6 +126,30 @@ async function apiGet<T>(path: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+async function apiWrite<T>(
+  method: "POST" | "PUT",
+  path: string,
+  body: CreateClubMember | UpdateClubMember,
+): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new Bc3ApiError("Kan ikke oprette forbindelse til BC3 API.");
+  }
+  if (!res.ok) {
+    throw new Bc3ApiError(`BC3 API svarede med fejl ${res.status}.`, res.status);
+  }
+  return (await res.json()) as T;
+}
+
 export function getClub(fdbNo: number | string) {
   return apiGet<Club>(`/api/Clubs/${fdbNo}`);
 }
@@ -110,6 +164,31 @@ export function getMembers(fdbNo: number | string) {
 
 export function getMemberClubs(fdbNo: number | string) {
   return apiGet<MemberClub[]>(`/api/Clubs/${fdbNo}/MemberClubs`);
+}
+
+function clubMembersPath(fdbNo: number | string, clubId: number | string) {
+  return `/api/Clubs/${fdbNo}/SubClubs/${clubId}/Members`;
+}
+
+export function getClubMembers(fdbNo: number | string, clubId: number | string) {
+  return apiGet<ClubMember[]>(clubMembersPath(fdbNo, clubId));
+}
+
+export function createClubMember(
+  fdbNo: number | string,
+  clubId: number | string,
+  input: CreateClubMember,
+) {
+  return apiWrite<ClubMember>("POST", clubMembersPath(fdbNo, clubId), input);
+}
+
+export function updateClubMember(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+  input: UpdateClubMember,
+) {
+  return apiWrite<ClubMember>("PUT", `${clubMembersPath(fdbNo, clubId)}/${memberId}`, input);
 }
 
 /** "J"/"Y"/"1"/"true" tolkes som ja — API'et leverer tekstflag. */

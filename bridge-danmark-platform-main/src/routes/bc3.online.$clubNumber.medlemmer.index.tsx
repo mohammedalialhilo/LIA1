@@ -4,6 +4,7 @@ import { Bc3Layout } from "@/components/bc3/Bc3Layout";
 import { Panel } from "@/components/bc3/Bc3Bits";
 import { Bc3Empty, Bc3QueryState } from "@/components/bc3/ApiState";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
@@ -70,15 +71,34 @@ function Medlemmer() {
         titel="Medlemmer"
         beskrivelse="Medlemmerne hentes fra klubbens BC3-database via BC3 API'et."
         handling={
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={soeg}
-              onChange={(e) => setSoeg(e.target.value)}
-              placeholder="Søg navn eller medlemsnr."
-              className="pl-9"
-              aria-label="Søg medlemmer"
-            />
+          <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+            {fdbNo === "9999" && (
+              <>
+                <Button asChild size="sm">
+                  <Link
+                    to="/bc3/online/$clubNumber/medlemmer/tilfoej"
+                    params={{ clubNumber: fdbNo }}
+                  >
+                    Tilføj medlem
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/bc3/online/$clubNumber/underklubber" params={{ clubNumber: fdbNo }}>
+                    Administrer medlemmer
+                  </Link>
+                </Button>
+              </>
+            )}
+            <div className="relative w-full sm:max-w-xs">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={soeg}
+                onChange={(e) => setSoeg(e.target.value)}
+                placeholder="Søg navn eller medlemsnr."
+                className="pl-9"
+                aria-label="Søg medlemmer"
+              />
+            </div>
           </div>
         }
       >

@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 import { Bc3Layout } from "@/components/bc3/Bc3Layout";
 import { FeltRaekke, Panel } from "@/components/bc3/Bc3Bits";
 import { Bc3Empty, Bc3Error, Bc3Loading } from "@/components/bc3/ApiState";
@@ -41,6 +42,7 @@ function MedlemDetalje() {
     underklubber.data,
     medlemmer.data,
   );
+  const redigeringsklub = medlemskaber[0];
 
   return (
     <Bc3Layout
@@ -67,7 +69,26 @@ function MedlemDetalje() {
 
       {medlem && (
         <div className="grid max-w-5xl gap-6 lg:grid-cols-2">
-          <Panel titel="Medlem">
+          <Panel
+            titel="Medlem"
+            handling={
+              fdbNo === "9999" && redigeringsklub ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link
+                    to="/bc3/online/$clubNumber/subclubs/$clubId"
+                    params={{
+                      clubNumber: fdbNo,
+                      clubId: String(redigeringsklub.underklubId),
+                    }}
+                    search={{ editMemberId: Number(memberId) }}
+                    hash="edituser"
+                  >
+                    Rediger medlem
+                  </Link>
+                </Button>
+              ) : null
+            }
+          >
             <dl>
               <FeltRaekke label="Navn" vaerdi={medlem.name} />
               <FeltRaekke
@@ -78,8 +99,11 @@ function MedlemDetalje() {
                 label="Adresse"
                 vaerdi={[medlem.address1, medlem.address2].filter(Boolean).join(", ")}
               />
-              <FeltRaekke label="Postnummer/by" vaerdi={`${medlem.zipCode} ${medlem.city}`} />
-              <FeltRaekke label="Land" vaerdi={medlem.countryCode} />
+              <FeltRaekke
+                label="Postnummer/by"
+                vaerdi={[medlem.zipCode, medlem.city].filter(Boolean).join(" ") || "—"}
+              />
+              <FeltRaekke label="Land" vaerdi={medlem.countryCode || "—"} />
               <FeltRaekke
                 label="Telefon"
                 vaerdi={[medlem.phone1, medlem.phone2, medlem.phone3].filter(Boolean).join(" · ")}

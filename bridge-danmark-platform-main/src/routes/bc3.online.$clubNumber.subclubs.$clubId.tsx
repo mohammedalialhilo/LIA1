@@ -17,8 +17,13 @@ import { useSubClubs } from "@/hooks/useSubClubs";
 import { useMembers } from "@/hooks/useMembers";
 import { useMemberClubs } from "@/hooks/useMemberClubs";
 import { byggMakkerpar } from "@/lib/bc3-memberships";
+import EditUser from "@/components/edituser/edituser";
 
 export const Route = createFileRoute("/bc3/online/$clubNumber/subclubs/$clubId")({
+  validateSearch: (search: Record<string, unknown>): { editMemberId?: number } => {
+    const memberId = Number(search["editMemberId"]);
+    return Number.isInteger(memberId) && memberId > 0 ? { editMemberId: memberId } : {};
+  },
   head: () => ({
     meta: [
       { title: "Underklub – BC3 Online" },
@@ -40,6 +45,7 @@ export const Route = createFileRoute("/bc3/online/$clubNumber/subclubs/$clubId")
 
 function UnderklubDetalje() {
   const { clubNumber: fdbNo, clubId } = Route.useParams();
+  const { editMemberId } = Route.useSearch();
   const klub = useClub(fdbNo);
   const underklubber = useSubClubs(fdbNo);
   const medlemmer = useMembers(fdbNo);
@@ -208,6 +214,15 @@ function UnderklubDetalje() {
               )}
             </Panel>
           </div>
+
+          {fdbNo === "9999" && (
+            <EditUser
+              key={`${fdbNo}:${clubId}`}
+              fdbNo={fdbNo}
+              clubId={clubId}
+              initialMemberId={editMemberId}
+            />
+          )}
         </>
       )}
     </Bc3Layout>

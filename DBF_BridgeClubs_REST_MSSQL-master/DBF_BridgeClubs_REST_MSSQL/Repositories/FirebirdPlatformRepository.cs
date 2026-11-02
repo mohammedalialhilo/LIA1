@@ -1,5 +1,4 @@
 using System.Data;
-using BridgeTourneringLib;
 using DBF_BridgeClubs_Lib.Models;
 using FirebirdSql.Data.FirebirdClient;
 
@@ -8,8 +7,7 @@ namespace DBF_BridgeClubs_REST_MSSQL.Repositories;
 /// <summary>Reads the local BC3 demo database without requiring a SQL Server import.</summary>
 public sealed class FirebirdPlatformRepository
 {
-    private static string ConnectionString =>
-        Environment.GetEnvironmentVariable("FIREBIRD_CONNECTION_STRING") ?? Secret.ConnectionString;
+    private static string ConnectionString => FirebirdConnectionSettings.ConnectionString;
 
     public async Task<MainClub> GetMainClubAsync()
     {

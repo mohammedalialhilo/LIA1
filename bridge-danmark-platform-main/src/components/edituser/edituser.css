@@ -1,0 +1,160 @@
+.edituser-container {
+  scroll-margin-top: 2rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 24px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  color: #222;
+}
+
+.edituser-container h2 {
+  margin: 0 0 24px;
+  font-size: 28px;
+}
+
+.edituser-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 24px;
+  margin-bottom: 32px;
+  background: #f7f8fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.edituser-form h3 {
+  margin: 0 0 12px;
+  font-size: 21px;
+}
+
+.edituser-form label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.edituser-form input,
+.edituser-form select {
+  width: 100%;
+  padding: 11px 12px;
+  box-sizing: border-box;
+  border: 1px solid #bbb;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 15px;
+}
+
+.edituser-form input:focus,
+.edituser-form select:focus {
+  outline: 2px solid #4776c5;
+  outline-offset: 1px;
+}
+
+.edituser-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.edituser-container button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 5px;
+  background: #2458a6;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edituser-container button:hover {
+  background: #194580;
+}
+
+.edituser-container button:focus-visible {
+  outline: 2px solid #222;
+  outline-offset: 3px;
+}
+
+.edituser-container .cancel-button {
+  background: #666;
+}
+
+.edituser-container .cancel-button:hover {
+  background: #444;
+}
+
+.edituser-list h3 {
+  margin-bottom: 16px;
+  font-size: 21px;
+}
+
+.edituser-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.edituser-details {
+  min-width: 0;
+}
+
+.edituser-card h4 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.edituser-card p {
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.edituser-error,
+.edituser-success {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.edituser-error {
+  color: #a61b1b;
+}
+.edituser-success {
+  color: #176b35;
+}
+
+.edituser-success a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.edituser-form-anchor {
+  scroll-margin-top: 2rem;
+}
+.edituser-container button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .edituser-container {
+    padding: 12px;
+  }
+
+  .edituser-form {
+    padding: 16px;
+  }
+
+  .edituser-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

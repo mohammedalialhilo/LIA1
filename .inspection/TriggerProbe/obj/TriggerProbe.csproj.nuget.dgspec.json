@@ -1,0 +1,266 @@
+{
+  "format": 1,
+  "restore": {
+    "A:\\LIA1\\.inspection\\TriggerProbe\\TriggerProbe.csproj": {}
+  },
+  "projects": {
+    "A:\\LIA1\\.inspection\\TriggerProbe\\TriggerProbe.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "A:\\LIA1\\.inspection\\TriggerProbe\\TriggerProbe.csproj",
+        "projectName": "TriggerProbe",
+        "projectPath": "A:\\LIA1\\.inspection\\TriggerProbe\\TriggerProbe.csproj",
+        "packagesPath": "C:\\Users\\alhil\\.nuget\\packages\\",
+        "outputPath": "A:\\LIA1\\.inspection\\TriggerProbe\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\alhil\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_REST_MSSQL\\DBF_BridgeClubs_REST_MSSQL.csproj": {
+                "projectPath": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_REST_MSSQL\\DBF_BridgeClubs_REST_MSSQL.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_Lib\\DBF_BridgeClubs_Lib.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_Lib\\DBF_BridgeClubs_Lib.csproj",
+        "projectName": "DBF_BridgeClubs_Lib",
+        "projectPath": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_Lib\\DBF_BridgeClubs_Lib.csproj",
+        "packagesPath": "C:\\Users\\alhil\\.nuget\\packages\\",
+        "outputPath": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_Lib\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\alhil\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.Data.SqlClient": {
+              "target": "Package",
+              "version": "[7.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_REST_MSSQL\\DBF_BridgeClubs_REST_MSSQL.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_REST_MSSQL\\DBF_BridgeClubs_REST_MSSQL.csproj",
+        "projectName": "DBF_BridgeClubs_REST_MSSQL",
+        "projectPath": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_REST_MSSQL\\DBF_BridgeClubs_REST_MSSQL.csproj",
+        "packagesPath": "C:\\Users\\alhil\\.nuget\\packages\\",
+        "outputPath": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_REST_MSSQL\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\alhil\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {
+              "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_Lib\\DBF_BridgeClubs_Lib.csproj": {
+                "projectPath": "A:\\LIA1\\DBF_BridgeClubs_REST_MSSQL-master\\DBF_BridgeClubs_Lib\\DBF_BridgeClubs_Lib.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "FirebirdSql.Data.FirebirdClient": {
+              "target": "Package",
+              "version": "[10.3.4, )"
+            },
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[9.0.20, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[9.0.6, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[9.0.11, 9.0.11]"
+            }
+          ],
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
