@@ -82,6 +82,7 @@ export interface Makkerpar {
 export interface MakkerparOversigt {
   par: Makkerpar[];
   udenMakker: MakkerparPerson[];
+  problemer: { person: MakkerparPerson; tekst: string }[];
 }
 
 function tilPerson(m: Member): MakkerparPerson {
@@ -99,48 +100,50 @@ export function byggMakkerpar(
 ): MakkerparOversigt {
   const raekker = (memberClubs ?? []).filter((r) => r.clubID === underklubId);
   const medlemIndex = new Map((members ?? []).map((m) => [m.memberID, m]));
-
-  // Ét medlemskab pr. medlem i denne underklub (fjerner dubletter fra API'et).
-  const partnerAf = new Map<number, number | null>();
-  for (const r of raekker) {
-    if (partnerAf.has(r.memberID)) continue;
-    const pid = r.partnerID && r.partnerID > 0 && r.partnerID !== r.memberID ? r.partnerID : null;
-    partnerAf.set(r.memberID, pid);
-  }
-
-  const sorteret = [...partnerAf.keys()]
-    .map((id) => ({ id, medlem: medlemIndex.get(id) }))
-    .sort((x, y) => (x.medlem?.name ?? "").localeCompare(y.medlem?.name ?? "", "da"));
-
-  const brugt = new Set<number>();
+  const links = new Map(raekker.map((row) => [row.memberID, row]));
+  const person = (id: number): MakkerparPerson => {
+    const found = medlemIndex.get(id);
+    return found ? tilPerson(found) : { memberID: id, navn: `Medlem ${id}` };
+  };
   const par: Makkerpar[] = [];
   const udenMakker: MakkerparPerson[] = [];
-
-  for (const { id, medlem } of sorteret) {
-    if (brugt.has(id)) continue;
-    const person: MakkerparPerson = medlem
-      ? tilPerson(medlem)
-      : { memberID: id, navn: `Medlem ${id}` };
-    const partnerId = partnerAf.get(id) ?? null;
-
-    if (partnerId === null) {
-      brugt.add(id);
-      udenMakker.push(person);
+  const problemer: MakkerparOversigt["problemer"] = [];
+  for (const row of links.values()) {
+    const partnerId = row.partnerID > 0 ? row.partnerID : 0;
+    const incoming = raekker.filter((candidate) => candidate.partnerID === row.memberID);
+    if (!partnerId) {
+      if (incoming.length > 0 || row.partnerFirst !== "F")
+        problemer.push({
+          person: person(row.memberID),
+          tekst: "Ufuldstændig makkerreference i BC3.",
+        });
+      else udenMakker.push(person(row.memberID));
       continue;
     }
-
-    const partner = medlemIndex.get(partnerId);
-    brugt.add(id);
-    brugt.add(partnerId);
+    const target = links.get(partnerId);
+    if (
+      partnerId === row.memberID ||
+      !target ||
+      target.partnerID !== row.memberID ||
+      target.partnerFirst === row.partnerFirst ||
+      incoming.length !== 1
+    ) {
+      problemer.push({
+        person: person(row.memberID),
+        tekst: `Makkerreference til medlem ${partnerId} er ufuldstændig.`,
+      });
+      continue;
+    }
+    if (row.memberID > partnerId) continue;
     par.push({
-      noegle: `${Math.min(id, partnerId)}-${Math.max(id, partnerId)}`,
-      a: person,
-      b: partner ? tilPerson(partner) : null,
-      makkerUkendt: !partner,
+      noegle: `${row.memberID}-${partnerId}`,
+      a: person(row.memberID),
+      b: medlemIndex.has(partnerId) ? person(partnerId) : null,
+      makkerUkendt: !medlemIndex.has(partnerId),
     });
   }
-
   udenMakker.sort((a, b) => a.navn.localeCompare(b.navn, "da"));
   par.sort((x, y) => x.a.navn.localeCompare(y.a.navn, "da"));
-  return { par, udenMakker };
+  problemer.sort((a, b) => a.person.navn.localeCompare(b.person.navn, "da"));
+  return { par, udenMakker, problemer };
 }

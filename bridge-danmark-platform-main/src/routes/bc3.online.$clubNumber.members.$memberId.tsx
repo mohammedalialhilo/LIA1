@@ -9,6 +9,7 @@ import { useMemberClubs } from "@/hooks/useMemberClubs";
 import { useSubClubs } from "@/hooks/useSubClubs";
 import { byggMedlemskaber } from "@/lib/bc3-memberships";
 import { MembershipActions } from "@/components/edituser/MembershipActions";
+import { PartnerActions } from "@/components/edituser/PartnerActions";
 
 export const Route = createFileRoute("/bc3/online/$clubNumber/members/$memberId")({
   head: () => ({
@@ -116,8 +117,8 @@ function MedlemDetalje() {
 
           <div className="space-y-6">
             <Panel
-              titel="Mine spillehold og makkere"
-              beskrivelse="Medlemskaber og faste makkere pr. underklub, hentet fra BC3-databasen."
+              titel="Makker og substitutstatus"
+              beskrivelse="Medlemskaber, faste makkere og substitutstatus pr. underklub."
             >
               {medlemsklubber.isPending || underklubber.isPending ? (
                 <Bc3Loading />
@@ -130,20 +131,28 @@ function MedlemDetalje() {
                       <p className="font-display text-base font-bold">{ms.underklubNavn}</p>
                       <p className="text-xs text-muted-foreground">Underklub {ms.underklubId}</p>
                       <div className="mt-3 border-t border-border/60 pt-3">
-                        <p className="text-sm text-muted-foreground">Makker</p>
-                        {ms.makkerstatus === "fundet" ? (
-                          <>
-                            <p className="text-sm font-semibold">{ms.makkerNavn}</p>
-                            <p className="font-mono text-xs text-muted-foreground">
-                              DBF-nr. {ms.makkerNr}
-                            </p>
-                          </>
-                        ) : ms.makkerstatus === "ukendt" ? (
-                          <p className="text-sm">
-                            Makker registreret, men medlemsoplysninger kunne ikke findes.
-                          </p>
+                        {fdbNo === "9999" && medlemsklubber.data && medlemmer.data ? (
+                          <PartnerActions
+                            fdbNo={fdbNo}
+                            clubId={ms.underklubId}
+                            clubName={ms.underklubNavn}
+                            member={medlem}
+                            link={medlemsklubber.data.find(
+                              (row) =>
+                                row.memberID === medlem.memberID && row.clubID === ms.underklubId,
+                            )!}
+                            allLinks={medlemsklubber.data}
+                            members={medlemmer.data}
+                          />
                         ) : (
-                          <p className="text-sm">Der er ikke registreret en fast makker.</p>
+                          <p className="text-sm">
+                            Fast makker:{" "}
+                            {ms.makkerstatus === "fundet"
+                              ? ms.makkerNavn
+                              : ms.makkerstatus === "ukendt"
+                                ? "Ukendt medlem"
+                                : "Ingen"}
+                          </p>
                         )}
                       </div>
                       {fdbNo === "9999" && medlemsklubber.data && underklubber.data && (

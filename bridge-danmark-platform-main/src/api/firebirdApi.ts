@@ -104,6 +104,25 @@ export interface MemberClubLink {
   clubId: number;
 }
 
+export interface EligiblePartner {
+  memberId: number;
+  memberNo: number | null;
+  name: string;
+}
+
+export interface PartnerState {
+  memberId: number;
+  clubId: number;
+  partnerMemberId: number | null;
+  partnerFirst: string;
+}
+
+export interface SubstituteState {
+  memberId: number;
+  clubId: number;
+  isSubstitute: boolean;
+}
+
 export type CreateClubMember = Pick<ClubMember, "name"> &
   Partial<
     Pick<
@@ -145,7 +164,7 @@ async function apiGet<T>(path: string): Promise<T> {
 async function apiWrite<T>(
   method: "POST" | "PUT" | "DELETE",
   path: string,
-  body?: CreateClubMember | UpdateClubMember | { memberId: number } | { destinationClubId: number },
+  body?: object,
 ): Promise<T> {
   let res: Response;
   try {
@@ -236,6 +255,70 @@ export function transferMemberToSubclub(
     "POST",
     `${clubMembersPath(fdbNo, sourceClubId)}/${memberId}/Transfer`,
     { destinationClubId },
+  );
+}
+
+function subclubPath(fdbNo: number | string, clubId: number | string) {
+  return `/api/Clubs/${fdbNo}/SubClubs/${clubId}`;
+}
+
+export function findEligiblePartners(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+  query: string,
+) {
+  return apiGet<EligiblePartner[]>(
+    `${subclubPath(fdbNo, clubId)}/Partnerships/${memberId}/Candidates?query=${encodeURIComponent(query.trim())}`,
+  );
+}
+
+export function findAvailableSubstitutes(
+  fdbNo: number | string,
+  clubId: number | string,
+  query: string,
+) {
+  return apiGet<EligiblePartner[]>(
+    `${subclubPath(fdbNo, clubId)}/Substitutes?query=${encodeURIComponent(query.trim())}`,
+  );
+}
+
+export function setRegularPartner(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+  partnerMemberId: number,
+  expectedPartnerMemberId: number,
+) {
+  return apiWrite<PartnerState>("PUT", `${subclubPath(fdbNo, clubId)}/Partnerships/${memberId}`, {
+    partnerMemberId,
+    expectedPartnerMemberId,
+  });
+}
+
+export function removeRegularPartner(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+  expectedPartnerMemberId: number,
+) {
+  return apiWrite<void>(
+    "DELETE",
+    `${subclubPath(fdbNo, clubId)}/Partnerships/${memberId}?expectedPartnerMemberId=${expectedPartnerMemberId}`,
+  );
+}
+
+export function setSubstituteStatus(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+  isSubstitute: boolean,
+  expectedIsSubstitute: boolean,
+) {
+  return apiWrite<SubstituteState>(
+    "PUT",
+    `${subclubPath(fdbNo, clubId)}/Members/${memberId}/SubstituteStatus`,
+    { isSubstitute, expectedIsSubstitute },
   );
 }
 
