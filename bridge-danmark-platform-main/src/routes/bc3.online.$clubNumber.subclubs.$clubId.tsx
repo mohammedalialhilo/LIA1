@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CalendarClock, Clock, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { flagErJa } from "@/api/firebirdApi";
 import { useClub } from "@/hooks/useClub";
 import { useSubClubs } from "@/hooks/useSubClubs";
@@ -216,12 +217,25 @@ function UnderklubDetalje() {
           </div>
 
           {fdbNo === "9999" && (
-            <EditUser
-              key={`${fdbNo}:${clubId}`}
-              fdbNo={fdbNo}
-              clubId={clubId}
-              initialMemberId={editMemberId}
-            />
+            <>
+              <div className="mt-6 flex justify-end">
+                <Button asChild variant="outline">
+                  <Link
+                    to="/bc3/online/$clubNumber/medlemmer/tilknyt"
+                    params={{ clubNumber: fdbNo }}
+                    search={{ clubId: Number(clubId) }}
+                  >
+                    Tilføj eksisterende medlem
+                  </Link>
+                </Button>
+              </div>
+              <EditUser
+                key={`${fdbNo}:${clubId}`}
+                fdbNo={fdbNo}
+                clubId={clubId}
+                initialMemberId={editMemberId}
+              />
+            </>
           )}
         </>
       )}

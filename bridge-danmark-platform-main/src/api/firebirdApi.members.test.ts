@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createClubMember, getClubMembers, updateClubMember } from "./firebirdApi";
+import {
+  addExistingMemberToSubclub,
+  createClubMember,
+  getClubMembers,
+  searchExistingMembers,
+  updateClubMember,
+} from "./firebirdApi";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -53,5 +59,37 @@ describe("club member API", () => {
       city: "Birkerød",
       countryCode: "DK",
     });
+  });
+
+  it("searches existing members and links the chosen ID without a person payload", async () => {
+    const candidate = {
+      memberId: 51,
+      memberNo: 32727,
+      name: "Fætter Højben",
+      alreadyAssigned: false,
+      subclubs: [{ clubId: 1, clubName: "Mandagsklubben" }],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([candidate]), { status: 200 }))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ memberClubId: 99, memberId: 51, clubId: 2 }), {
+          status: 201,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(searchExistingMembers(9999, 2, "Fætter")).resolves.toEqual([candidate]);
+    await expect(addExistingMemberToSubclub(9999, 2, 51)).resolves.toMatchObject({
+      memberClubId: 99,
+      memberId: 51,
+      clubId: 2,
+    });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toMatch(/\/Existing\?query=F%C3%A6tter$/);
+    const [url, init] = fetchMock.mock.calls[1] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/Clubs\/9999\/SubClubs\/2\/Members\/Existing$/);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ memberId: 51 });
   });
 });

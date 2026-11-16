@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using DBF_BridgeClubs_REST_MSSQL.Models;
 using DBF_BridgeClubs_REST_MSSQL.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,36 @@ public sealed class ClubMembersController(ClubMemberRepository repository) : Con
         if (fdbNo != 9999 || clubId <= 0 || memberId <= 0) return NotFound();
         var member = await repository.GetAsync(clubId, memberId, cancellationToken);
         return member is null ? NotFound() : Ok(member);
+    }
+
+    [HttpGet("Existing")]
+    [ProducesResponseType(typeof(List<ExistingMemberSearchResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SearchExisting(
+        int fdbNo, int clubId, [FromQuery, StringLength(40)] string? query, CancellationToken cancellationToken)
+    {
+        if (fdbNo != 9999 || clubId <= 0 || !await repository.ClubExistsAsync(clubId, cancellationToken))
+            return NotFound();
+        return Ok(await repository.SearchExistingAsync(clubId, query ?? string.Empty, cancellationToken));
+    }
+
+    [HttpPost("Existing")]
+    [ProducesResponseType(typeof(MemberClubLinkResponseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> AddExisting(
+        int fdbNo, int clubId, [FromBody] AddExistingMemberDto input, CancellationToken cancellationToken)
+    {
+        if (fdbNo != 9999 || clubId <= 0) return NotFound();
+        var (status, link) = await repository.AddExistingAsync(clubId, input.MemberId, cancellationToken);
+        return status switch
+        {
+            ClubMemberRepository.AddExistingStatus.ClubMissing => NotFound(new { error = "Subclub not found." }),
+            ClubMemberRepository.AddExistingStatus.MemberMissing => NotFound(new { error = "Member not found." }),
+            ClubMemberRepository.AddExistingStatus.AlreadyLinked => Conflict(new { error = "Member is already assigned to this subclub." }),
+            _ => CreatedAtAction(nameof(Get), new { fdbNo, clubId, memberId = input.MemberId }, link),
+        };
     }
 
     [HttpPost]

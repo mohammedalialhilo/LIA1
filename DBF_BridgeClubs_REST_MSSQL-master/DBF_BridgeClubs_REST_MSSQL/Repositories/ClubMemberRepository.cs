@@ -6,6 +6,8 @@ namespace DBF_BridgeClubs_REST_MSSQL.Repositories;
 
 public sealed class ClubMemberRepository
 {
+    public enum AddExistingStatus { Created, ClubMissing, MemberMissing, AlreadyLinked }
+
     private static string ConnectionString => FirebirdConnectionSettings.ConnectionString;
 
     private const string MemberColumns = """
@@ -41,6 +43,107 @@ public sealed class ClubMemberRepository
     {
         await using var connection = await OpenAsync(cancellationToken);
         return await GetAsync(connection, null, clubId, memberId, cancellationToken);
+    }
+
+    public async Task<List<ExistingMemberSearchResultDto>> SearchExistingAsync(
+        int destinationClubId, string search, CancellationToken cancellationToken)
+    {
+        var results = new List<ExistingMemberSearchResultDto>();
+        if (string.IsNullOrWhiteSpace(search)) return results;
+
+        await using var connection = await OpenAsync(cancellationToken);
+        await using (var command = new FbCommand("""
+            SELECT FIRST 25 MEMBER_ID, MEMBER_NO, NAME
+            FROM MEM_MEMBER
+            WHERE NAME CONTAINING @search OR MEMBER_NO = @number OR MEMBER_ID = @number
+            ORDER BY NAME, MEMBER_ID
+            """, connection))
+        {
+            command.Parameters.AddWithValue("@search", search.Trim());
+            command.Parameters.AddWithValue("@number", int.TryParse(search.Trim(), out var number) ? number : -1);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                results.Add(new ExistingMemberSearchResultDto
+                {
+                    MemberId = reader.GetInt32(0),
+                    MemberNo = reader.IsDBNull(1) ? null : reader.GetInt32(1),
+                    Name = reader.IsDBNull(2) ? string.Empty : reader.GetString(2).TrimEnd(),
+                });
+            }
+        }
+
+        if (results.Count == 0) return results;
+        var byId = results.ToDictionary(member => member.MemberId);
+        var placeholders = results.Select((_, index) => $"@member{index}").ToArray();
+        await using var memberships = new FbCommand($"""
+            SELECT MC.MEMBER_ID, MC.CLUB_ID, C.CLUB_NAME
+            FROM MEM_MEMBER_CLUB MC
+            LEFT JOIN MEM_CLUB C ON C.CLUB_ID = MC.CLUB_ID
+            WHERE MC.MEMBER_ID IN ({string.Join(", ", placeholders)})
+            ORDER BY MC.MEMBER_ID, C.CLUB_NAME
+            """, connection);
+        for (var index = 0; index < results.Count; index++)
+            memberships.Parameters.AddWithValue(placeholders[index], results[index].MemberId);
+        await using var membershipReader = await memberships.ExecuteReaderAsync(cancellationToken);
+        while (await membershipReader.ReadAsync(cancellationToken))
+        {
+            var member = byId[membershipReader.GetInt32(0)];
+            var clubId = membershipReader.GetInt32(1);
+            member.Subclubs.Add(new ExistingMemberSubclubDto
+            {
+                ClubId = clubId,
+                ClubName = membershipReader.IsDBNull(2)
+                    ? $"Underklub {clubId}"
+                    : membershipReader.GetString(2).TrimEnd(),
+            });
+            if (clubId == destinationClubId) member.AlreadyAssigned = true;
+        }
+        return results;
+    }
+
+    public async Task<(AddExistingStatus Status, MemberClubLinkResponseDto? Link)> AddExistingAsync(
+        int clubId, int memberId, CancellationToken cancellationToken)
+    {
+        await using var connection = await OpenAsync(cancellationToken);
+        await using var transaction = (FbTransaction)await connection.BeginTransactionAsync(cancellationToken);
+        if (!await ClubExistsAsync(connection, transaction, clubId, cancellationToken))
+            return (AddExistingStatus.ClubMissing, null);
+        if (!await MemberExistsAsync(connection, transaction, memberId, cancellationToken))
+            return (AddExistingStatus.MemberMissing, null);
+        if (await LinkExistsAsync(connection, transaction, clubId, memberId, cancellationToken))
+            return (AddExistingStatus.AlreadyLinked, null);
+
+        int linkId;
+        try
+        {
+            await using var insert = new FbCommand("""
+                INSERT INTO MEM_MEMBER_CLUB
+                    (MEMBER_CLUB_ID, MEMBER_ID, CLUB_ID, LAST_CHANGED_BY, LAST_CHANGED_DATE)
+                VALUES (GEN_ID(MEMBER_CLUB, 1), @memberId, @clubId, 'REST API', CURRENT_TIMESTAMP)
+                RETURNING MEMBER_CLUB_ID
+                """, connection);
+            insert.Transaction = transaction;
+            insert.Parameters.AddWithValue("@memberId", memberId);
+            insert.Parameters.AddWithValue("@clubId", clubId);
+            linkId = Convert.ToInt32(await insert.ExecuteScalarAsync(cancellationToken));
+        }
+        catch (FbException)
+        {
+            // The unique member/club index is the final guard when requests race.
+            await transaction.RollbackAsync(cancellationToken);
+            await using var freshConnection = await OpenAsync(cancellationToken);
+            if (await LinkExistsAsync(freshConnection, null, clubId, memberId, cancellationToken))
+                return (AddExistingStatus.AlreadyLinked, null);
+            throw;
+        }
+        await transaction.CommitAsync(cancellationToken);
+        return (AddExistingStatus.Created, new MemberClubLinkResponseDto
+        {
+            MemberClubId = linkId,
+            MemberId = memberId,
+            ClubId = clubId,
+        });
     }
 
     public async Task<(ClubMemberResponseDto? Member, bool Duplicate, bool ClubMissing)> CreateAsync(
@@ -156,6 +259,28 @@ public sealed class ClubMemberRepository
         await using var command = new FbCommand("SELECT 1 FROM MEM_MEMBER WHERE MEMBER_NO = @memberNo", connection);
         command.Transaction = transaction;
         command.Parameters.AddWithValue("@memberNo", memberNo);
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
+    private static async Task<bool> MemberExistsAsync(
+        FbConnection connection, FbTransaction transaction, int memberId, CancellationToken cancellationToken)
+    {
+        await using var command = new FbCommand("SELECT 1 FROM MEM_MEMBER WHERE MEMBER_ID = @memberId", connection);
+        command.Transaction = transaction;
+        command.Parameters.AddWithValue("@memberId", memberId);
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
+    private static async Task<bool> LinkExistsAsync(
+        FbConnection connection, FbTransaction? transaction,
+        int clubId, int memberId, CancellationToken cancellationToken)
+    {
+        await using var command = new FbCommand("""
+            SELECT 1 FROM MEM_MEMBER_CLUB WHERE MEMBER_ID = @memberId AND CLUB_ID = @clubId
+            """, connection);
+        command.Transaction = transaction;
+        command.Parameters.AddWithValue("@memberId", memberId);
+        command.Parameters.AddWithValue("@clubId", clubId);
         return await command.ExecuteScalarAsync(cancellationToken) is not null;
     }
 

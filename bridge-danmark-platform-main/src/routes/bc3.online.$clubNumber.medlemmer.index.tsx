@@ -83,6 +83,15 @@ function Medlemmer() {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm">
+                  <Link
+                    to="/bc3/online/$clubNumber/medlemmer/tilknyt"
+                    params={{ clubNumber: fdbNo }}
+                    search={{}}
+                  >
+                    Tilføj eksisterende medlem
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
                   <Link to="/bc3/online/$clubNumber/underklubber" params={{ clubNumber: fdbNo }}>
                     Administrer medlemmer
                   </Link>

@@ -55,3 +55,31 @@ public sealed class ClubMemberResponseDto
     public string? Email { get; set; }
     public DateOnly? ClubStart { get; set; }
 }
+
+public sealed class AddExistingMemberDto
+{
+    [Range(1, int.MaxValue)]
+    public int MemberId { get; set; }
+}
+
+public sealed class MemberClubLinkResponseDto
+{
+    public int MemberClubId { get; set; }
+    public int MemberId { get; set; }
+    public int ClubId { get; set; }
+}
+
+public sealed class ExistingMemberSearchResultDto
+{
+    public int MemberId { get; set; }
+    public int? MemberNo { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public bool AlreadyAssigned { get; set; }
+    public List<ExistingMemberSubclubDto> Subclubs { get; set; } = [];
+}
+
+public sealed class ExistingMemberSubclubDto
+{
+    public int ClubId { get; set; }
+    public string ClubName { get; set; } = string.Empty;
+}

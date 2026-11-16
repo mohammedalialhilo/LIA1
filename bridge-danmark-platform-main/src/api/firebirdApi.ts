@@ -90,6 +90,20 @@ export interface ClubMember {
   clubStart: string | null;
 }
 
+export interface ExistingMemberCandidate {
+  memberId: number;
+  memberNo: number | null;
+  name: string;
+  alreadyAssigned: boolean;
+  subclubs: { clubId: number; clubName: string }[];
+}
+
+export interface MemberClubLink {
+  memberClubId: number;
+  memberId: number;
+  clubId: number;
+}
+
 export type CreateClubMember = Pick<ClubMember, "name"> &
   Partial<
     Pick<
@@ -129,7 +143,7 @@ async function apiGet<T>(path: string): Promise<T> {
 async function apiWrite<T>(
   method: "POST" | "PUT",
   path: string,
-  body: CreateClubMember | UpdateClubMember,
+  body: CreateClubMember | UpdateClubMember | { memberId: number },
 ): Promise<T> {
   let res: Response;
   try {
@@ -172,6 +186,26 @@ function clubMembersPath(fdbNo: number | string, clubId: number | string) {
 
 export function getClubMembers(fdbNo: number | string, clubId: number | string) {
   return apiGet<ClubMember[]>(clubMembersPath(fdbNo, clubId));
+}
+
+export function searchExistingMembers(
+  fdbNo: number | string,
+  clubId: number | string,
+  query: string,
+) {
+  return apiGet<ExistingMemberCandidate[]>(
+    `${clubMembersPath(fdbNo, clubId)}/Existing?query=${encodeURIComponent(query.trim())}`,
+  );
+}
+
+export function addExistingMemberToSubclub(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+) {
+  return apiWrite<MemberClubLink>("POST", `${clubMembersPath(fdbNo, clubId)}/Existing`, {
+    memberId,
+  });
 }
 
 export function createClubMember(
