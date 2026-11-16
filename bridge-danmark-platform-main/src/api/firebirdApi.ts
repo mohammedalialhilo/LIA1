@@ -123,16 +123,98 @@ export interface SubstituteState {
   isSubstitute: boolean;
 }
 
+export interface FeeCategory {
+  code: number;
+  name: string;
+}
+
+export interface MemberAdministration {
+  memberId: number;
+  feeCategoryCode: number | null;
+  feeCategoryName: string;
+  clubStart: string | null;
+  statusChanged: string | null;
+  lastChangedBy: string | null;
+}
+
+export interface MemberHistoryEntry {
+  logId: number;
+  at: string;
+  actor: string | null;
+  code: number;
+  text1: string | null;
+  text2: string | null;
+  value1: string | null;
+  value2: string | null;
+}
+
+export interface MemberSearchFilters {
+  query?: string;
+  city?: string;
+  subclubId?: number;
+  feeCategory?: number;
+  isSubstitute?: boolean;
+  hasPartner?: boolean;
+  startFrom?: string;
+  startTo?: string;
+  sort?: "name" | "memberNo" | "city" | "clubStart";
+  descending?: boolean;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface MemberSearchItem {
+  memberId: number;
+  memberNo: number | null;
+  name: string;
+  city: string | null;
+  phone1: string | null;
+  email: string | null;
+  clubStart: string | null;
+  feeCategoryCode: number | null;
+  subclubs: string;
+}
+
+export interface MemberSearchPage {
+  total: number;
+  page: number;
+  pageSize: number;
+  items: MemberSearchItem[];
+}
+
 export type CreateClubMember = Pick<ClubMember, "name"> &
   Partial<
     Pick<
       ClubMember,
-      "memberNo" | "email" | "phone1" | "address1" | "zipCode" | "city" | "countryCode"
+      | "memberNo"
+      | "email"
+      | "phone1"
+      | "phone2"
+      | "phone3"
+      | "address1"
+      | "address2"
+      | "zipCode"
+      | "city"
+      | "countryCode"
+      | "clubStart"
     >
   >;
 
 export type UpdateClubMember = Partial<
-  Pick<ClubMember, "name" | "email" | "phone1" | "address1" | "zipCode" | "city" | "countryCode">
+  Pick<
+    ClubMember,
+    | "name"
+    | "email"
+    | "phone1"
+    | "phone2"
+    | "phone3"
+    | "address1"
+    | "address2"
+    | "zipCode"
+    | "city"
+    | "countryCode"
+    | "clubStart"
+  >
 >;
 
 export class Bc3ApiError extends Error {
@@ -320,6 +402,75 @@ export function setSubstituteStatus(
     `${subclubPath(fdbNo, clubId)}/Members/${memberId}/SubstituteStatus`,
     { isSubstitute, expectedIsSubstitute },
   );
+}
+
+function memberAdministrationPath(fdbNo: number | string, memberId: number) {
+  return `/api/Clubs/${fdbNo}/Members/${memberId}`;
+}
+
+export function getMemberAdministration(fdbNo: number | string, memberId: number) {
+  return apiGet<MemberAdministration>(
+    `${memberAdministrationPath(fdbNo, memberId)}/Administration`,
+  );
+}
+
+export function getFeeCategories(fdbNo: number | string) {
+  return apiGet<FeeCategory[]>(`/api/Clubs/${fdbNo}/Members/FeeCategories`);
+}
+
+export function setFeeCategory(
+  fdbNo: number | string,
+  memberId: number,
+  code: number,
+  expectedCode: number,
+) {
+  return apiWrite<MemberAdministration>(
+    "PUT",
+    `${memberAdministrationPath(fdbNo, memberId)}/FeeCategory`,
+    { code, expectedCode },
+  );
+}
+
+export function getMemberHistory(fdbNo: number | string, memberId: number) {
+  return apiGet<MemberHistoryEntry[]>(`${memberAdministrationPath(fdbNo, memberId)}/History`);
+}
+
+function memberSearchParams(filters: MemberSearchFilters, includePage: boolean) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (!includePage && (key === "page" || key === "pageSize")) continue;
+    if (value !== undefined && value !== "") params.set(key, String(value));
+  }
+  return params.toString();
+}
+
+export function searchMembers(fdbNo: number | string, filters: MemberSearchFilters) {
+  return apiGet<MemberSearchPage>(
+    `/api/Clubs/${fdbNo}/Members/Search?${memberSearchParams(filters, true)}`,
+  );
+}
+
+export async function exportMembers(fdbNo: number | string, filters: MemberSearchFilters) {
+  let response: Response;
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/api/Clubs/${fdbNo}/Members/Export?${memberSearchParams(filters, false)}`,
+    );
+  } catch {
+    throw new Bc3ApiError("Kan ikke oprette forbindelse til BC3 API.");
+  }
+  if (!response.ok) {
+    const details = (await response.json().catch(() => null)) as {
+      code?: string;
+      error?: string;
+    } | null;
+    throw new Bc3ApiError(
+      details?.error ?? `Eksporten mislykkedes (${response.status}).`,
+      response.status,
+      details?.code,
+    );
+  }
+  return response.blob();
 }
 
 export function createClubMember(

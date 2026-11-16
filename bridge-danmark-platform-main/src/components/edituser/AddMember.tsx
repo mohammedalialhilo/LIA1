@@ -47,10 +47,14 @@ export function AddMember({ fdbNo }: { fdbNo: string }) {
         ...(memberNo && { memberNo: Number(memberNo) }),
         ...(form.email.trim() && { email: form.email.trim() }),
         ...(form.phone1.trim() && { phone1: form.phone1.trim() }),
+        ...(form.phone2.trim() && { phone2: form.phone2.trim() }),
+        ...(form.phone3.trim() && { phone3: form.phone3.trim() }),
         ...(form.address1.trim() && { address1: form.address1.trim() }),
+        ...(form.address2.trim() && { address2: form.address2.trim() }),
         ...(form.zipCode.trim() && { zipCode: form.zipCode.trim() }),
         ...(form.city.trim() && { city: form.city.trim() }),
         ...(form.countryCode.trim() && { countryCode: form.countryCode.trim().toUpperCase() }),
+        ...(form.clubStart && { clubStart: form.clubStart }),
       });
       await refreshMemberQueries(queryClient, fdbNo, clubId);
       setCreatedMemberId(created.memberId);

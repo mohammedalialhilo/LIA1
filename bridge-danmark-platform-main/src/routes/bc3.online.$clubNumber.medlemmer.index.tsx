@@ -17,6 +17,7 @@ import {
 import { Search } from "lucide-react";
 import { useClub } from "@/hooks/useClub";
 import { useMembers } from "@/hooks/useMembers";
+import { MemberSearchList } from "@/components/edituser/MemberSearchList";
 
 export const Route = createFileRoute("/bc3/online/$clubNumber/medlemmer/")({
   head: () => ({
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/bc3/online/$clubNumber/medlemmer/")({
 function Medlemmer() {
   const { clubNumber: fdbNo } = Route.useParams();
   const klub = useClub(fdbNo);
-  const medlemmer = useMembers(fdbNo);
+  const medlemmer = useMembers(fdbNo, fdbNo !== "9999");
   const [soeg, setSoeg] = useState("");
   const titel = klub.data ? `${klub.data.clubNo} – ${klub.data.name}` : undefined;
 
@@ -52,6 +53,8 @@ function Medlemmer() {
       (m) => m.name.toLowerCase().includes(q) || String(m.memberNo).includes(q),
     );
   }, [medlemmer.data, soeg]);
+
+  if (fdbNo === "9999") return <MemberSearchList fdbNo={fdbNo} titel={titel} />;
 
   return (
     <Bc3Layout

@@ -22,20 +22,43 @@ public sealed class CreateClubMemberDto
     public DateOnly? ClubStart { get; set; }
 }
 
-// Omitted and null properties are both left unchanged by PUT. Send a non-null value to edit a field.
-public sealed class UpdateClubMemberDto
+// Omitted properties are unchanged; explicit null clears optional fields.
+public sealed class UpdateClubMemberDto : IValidatableObject
 {
-    [StringLength(40)] public string? Name { get; set; }
-    [StringLength(40)] public string? Address1 { get; set; }
-    [StringLength(40)] public string? Address2 { get; set; }
-    [StringLength(5)] public string? CountryCode { get; set; }
-    [StringLength(10)] public string? ZipCode { get; set; }
-    [StringLength(20)] public string? City { get; set; }
-    [StringLength(20)] public string? Phone1 { get; set; }
-    [StringLength(20)] public string? Phone2 { get; set; }
-    [StringLength(20)] public string? Phone3 { get; set; }
-    [StringLength(40), EmailAddress] public string? Email { get; set; }
-    public DateOnly? ClubStart { get; set; }
+    public OptionalString Name { get; set; }
+    public OptionalString Address1 { get; set; }
+    public OptionalString Address2 { get; set; }
+    public OptionalString CountryCode { get; set; }
+    public OptionalString ZipCode { get; set; }
+    public OptionalString City { get; set; }
+    public OptionalString Phone1 { get; set; }
+    public OptionalString Phone2 { get; set; }
+    public OptionalString Phone3 { get; set; }
+    public OptionalString Email { get; set; }
+    public OptionalDate ClubStart { get; set; }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!new[] { Name, Address1, Address2, CountryCode, ZipCode, City,
+                     Phone1, Phone2, Phone3, Email }.Any(field => field.IsSpecified) &&
+            !ClubStart.IsSpecified)
+            yield return new ValidationResult("Angiv mindst ét felt, der skal ændres.");
+        if (Name.IsSpecified && string.IsNullOrWhiteSpace(Name.Value))
+            yield return new ValidationResult("Navn må ikke være tomt.", [nameof(Name)]);
+        foreach (var (field, max, name) in new[]
+        {
+            (Name, 40, nameof(Name)), (Address1, 40, nameof(Address1)),
+            (Address2, 40, nameof(Address2)), (CountryCode, 5, nameof(CountryCode)),
+            (ZipCode, 10, nameof(ZipCode)), (City, 20, nameof(City)),
+            (Phone1, 20, nameof(Phone1)), (Phone2, 20, nameof(Phone2)),
+            (Phone3, 20, nameof(Phone3)), (Email, 40, nameof(Email)),
+        })
+            if (field.IsSpecified && field.Value?.Length > max)
+                yield return new ValidationResult($"{name} må højst være {max} tegn.", [name]);
+        if (Email.IsSpecified && !string.IsNullOrWhiteSpace(Email.Value) &&
+            !new EmailAddressAttribute().IsValid(Email.Value))
+            yield return new ValidationResult("E-mailadressen er ugyldig.", [nameof(Email)]);
+    }
 }
 
 public sealed class ClubMemberResponseDto

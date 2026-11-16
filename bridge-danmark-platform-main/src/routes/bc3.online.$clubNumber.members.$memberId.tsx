@@ -10,6 +10,12 @@ import { useSubClubs } from "@/hooks/useSubClubs";
 import { byggMedlemskaber } from "@/lib/bc3-memberships";
 import { MembershipActions } from "@/components/edituser/MembershipActions";
 import { PartnerActions } from "@/components/edituser/PartnerActions";
+import { FeeCategoryEditor } from "@/components/edituser/FeeCategoryEditor";
+import {
+  useFeeCategories,
+  useMemberAdministration,
+  useMemberHistory,
+} from "@/hooks/useMemberAdministration";
 
 export const Route = createFileRoute("/bc3/online/$clubNumber/members/$memberId")({
   head: () => ({
@@ -34,6 +40,9 @@ function MedlemDetalje() {
   const medlemmer = useMembers(fdbNo);
   const medlemsklubber = useMemberClubs(fdbNo);
   const underklubber = useSubClubs(fdbNo);
+  const administration = useMemberAdministration(fdbNo, Number(memberId));
+  const categories = useFeeCategories(fdbNo);
+  const history = useMemberHistory(fdbNo, Number(memberId));
 
   const titel = klub.data ? `${klub.data.clubNo} – ${klub.data.name}` : undefined;
   const medlem = medlemmer.data?.find((m) => m.memberID === Number(memberId));
@@ -71,49 +80,52 @@ function MedlemDetalje() {
 
       {medlem && (
         <div className="grid max-w-5xl gap-6 lg:grid-cols-2">
-          <Panel
-            titel="Medlem"
-            handling={
-              fdbNo === "9999" && redigeringsklub ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link
-                    to="/bc3/online/$clubNumber/subclubs/$clubId"
-                    params={{
-                      clubNumber: fdbNo,
-                      clubId: String(redigeringsklub.underklubId),
-                    }}
-                    search={{ editMemberId: Number(memberId) }}
-                    hash="edituser"
-                  >
-                    Rediger medlem
-                  </Link>
-                </Button>
-              ) : null
-            }
-          >
-            <dl>
-              <FeltRaekke label="Navn" vaerdi={medlem.name} />
-              <FeltRaekke
-                label="DBF-medlemsnummer"
-                vaerdi={<span className="font-mono">{medlem.memberNo}</span>}
-              />
-              <FeltRaekke
-                label="Adresse"
-                vaerdi={[medlem.address1, medlem.address2].filter(Boolean).join(", ")}
-              />
-              <FeltRaekke
-                label="Postnummer/by"
-                vaerdi={[medlem.zipCode, medlem.city].filter(Boolean).join(" ") || "—"}
-              />
-              <FeltRaekke label="Land" vaerdi={medlem.countryCode || "—"} />
-              <FeltRaekke
-                label="Telefon"
-                vaerdi={[medlem.phone1, medlem.phone2, medlem.phone3].filter(Boolean).join(" · ")}
-              />
-              <FeltRaekke label="E-mail" vaerdi={medlem.email} />
-              <FeltRaekke label="Klubstart" vaerdi={medlem.clubStart} />
-            </dl>
-          </Panel>
+          <div className="space-y-6">
+            <Panel
+              titel="Personlige oplysninger"
+              handling={
+                fdbNo === "9999" && redigeringsklub ? (
+                  <Button asChild variant="outline" size="sm">
+                    <Link
+                      to="/bc3/online/$clubNumber/subclubs/$clubId"
+                      params={{
+                        clubNumber: fdbNo,
+                        clubId: String(redigeringsklub.underklubId),
+                      }}
+                      search={{ editMemberId: Number(memberId) }}
+                      hash="edituser"
+                    >
+                      Rediger medlem
+                    </Link>
+                  </Button>
+                ) : null
+              }
+            >
+              <dl>
+                <FeltRaekke label="Navn" vaerdi={medlem.name} />
+                <FeltRaekke
+                  label="DBF-medlemsnummer"
+                  vaerdi={<span className="font-mono">{medlem.memberNo}</span>}
+                />
+                <FeltRaekke label="Klubstart" vaerdi={medlem.clubStart} />
+              </dl>
+            </Panel>
+            <Panel titel="Kontaktoplysninger">
+              <dl>
+                <FeltRaekke label="Adresse" vaerdi={medlem.address1 || "—"} />
+                <FeltRaekke label="Adresse 2" vaerdi={medlem.address2 || "—"} />
+                <FeltRaekke
+                  label="Postnummer/by"
+                  vaerdi={[medlem.zipCode, medlem.city].filter(Boolean).join(" ") || "—"}
+                />
+                <FeltRaekke label="Land" vaerdi={medlem.countryCode || "—"} />
+                <FeltRaekke label="Telefon" vaerdi={medlem.phone1 || "—"} />
+                <FeltRaekke label="Telefon 2" vaerdi={medlem.phone2 || "—"} />
+                <FeltRaekke label="Telefon 3" vaerdi={medlem.phone3 || "—"} />
+                <FeltRaekke label="E-mail" vaerdi={medlem.email || "—"} />
+              </dl>
+            </Panel>
+          </div>
 
           <div className="space-y-6">
             <Panel
@@ -130,6 +142,7 @@ function MedlemDetalje() {
                     <li key={ms.noegle} className="rounded-xl border border-border p-4">
                       <p className="font-display text-base font-bold">{ms.underklubNavn}</p>
                       <p className="text-xs text-muted-foreground">Underklub {ms.underklubId}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Tilknyttet underklubben</p>
                       <div className="mt-3 border-t border-border/60 pt-3">
                         {fdbNo === "9999" && medlemsklubber.data && medlemmer.data ? (
                           <PartnerActions
@@ -176,6 +189,47 @@ function MedlemDetalje() {
               )}
             </Panel>
 
+            {fdbNo === "9999" && (
+              <Panel
+                titel="Medlemskabstype og kontingent"
+                beskrivelse="BC3 registrerer en kontingentkategori på medlemmet. Lokale satser og betalingsposter er ikke tilgængelige i klub 9999."
+              >
+                {administration.isPending || categories.isPending ? (
+                  <Bc3Loading />
+                ) : administration.isError || categories.isError ? (
+                  <Bc3Error fejl={administration.error ?? categories.error} />
+                ) : (
+                  <div className="space-y-3">
+                    <dl>
+                      <FeltRaekke
+                        label="Kontingentkategori"
+                        vaerdi={administration.data.feeCategoryName}
+                      />
+                      <FeltRaekke
+                        label="Senest ændret"
+                        vaerdi={
+                          administration.data.statusChanged
+                            ? new Date(administration.data.statusChanged).toLocaleString("da-DK")
+                            : "—"
+                        }
+                      />
+                    </dl>
+                    <FeeCategoryEditor
+                      fdbNo={fdbNo}
+                      memberId={medlem.memberID}
+                      memberName={medlem.name}
+                      administration={administration.data}
+                      categories={categories.data}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Underklubmedlemskaber har ingen særskilt inaktiv tilstand eller slutdato i den
+                      lokale BC3-database.
+                    </p>
+                  </div>
+                )}
+              </Panel>
+            )}
+
             <Panel titel="Mesterpoint">
               <dl>
                 <FeltRaekke label="Bronze" vaerdi={medlem.totalBronze} />
@@ -184,6 +238,39 @@ function MedlemDetalje() {
                 <FeltRaekke label="Mesterpoint i alt" vaerdi={medlem.totalMaster} />
               </dl>
             </Panel>
+
+            {fdbNo === "9999" && (
+              <Panel
+                titel="Medlemshistorik"
+                beskrivelse="De seneste 100 poster, som BC3 faktisk har gemt i sin log."
+              >
+                {history.isPending ? (
+                  <Bc3Loading />
+                ) : history.isError ? (
+                  <Bc3Error fejl={history.error} />
+                ) : history.data.length === 0 ? (
+                  <Bc3Empty tekst="Ingen logposter fundet for medlemmet." />
+                ) : (
+                  <ol className="max-h-96 space-y-3 overflow-y-auto">
+                    {history.data.map((entry) => (
+                      <li key={entry.logId} className="rounded-lg border border-border p-3 text-sm">
+                        <p>
+                          {[entry.text1, entry.value1, entry.text2, entry.value2]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          <time dateTime={entry.at}>
+                            {new Date(entry.at).toLocaleString("da-DK")}
+                          </time>
+                          {entry.actor ? ` · ${entry.actor}` : ""}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </Panel>
+            )}
           </div>
         </div>
       )}

@@ -12,6 +12,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ClubMemberRepository>();
 builder.Services.AddScoped<ClubPartnerRepository>();
+builder.Services.AddScoped<MemberAdministrationRepository>();
+builder.Services.AddScoped<MemberSearchRepository>();
 
 builder.Services.AddCors(options =>
 {

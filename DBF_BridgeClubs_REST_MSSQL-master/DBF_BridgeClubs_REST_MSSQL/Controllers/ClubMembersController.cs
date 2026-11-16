@@ -143,14 +143,6 @@ public sealed class ClubMembersController(ClubMemberRepository repository) : Con
         CancellationToken cancellationToken)
     {
         if (fdbNo != 9999 || clubId <= 0 || memberId <= 0) return NotFound();
-        if (input.Name is not null && string.IsNullOrWhiteSpace(input.Name))
-            return BadRequest(new { error = "Name cannot be blank." });
-        if (input.Name is null && input.Address1 is null && input.Address2 is null &&
-            input.CountryCode is null && input.ZipCode is null && input.City is null &&
-            input.Phone1 is null && input.Phone2 is null && input.Phone3 is null &&
-            input.Email is null && input.ClubStart is null)
-            return BadRequest(new { error = "Provide at least one editable field." });
-
         var member = await repository.UpdateAsync(clubId, memberId, input, cancellationToken);
         return member is null ? NotFound() : Ok(member);
     }

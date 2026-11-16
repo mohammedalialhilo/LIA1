@@ -124,8 +124,10 @@
     oklch(0.5 0.11 200) 100%
   );
   --gradient-accent: linear-gradient(100deg, oklch(0.68 0.17 35), oklch(0.78 0.13 65));
-  --shadow-card: 0 1px 2px oklch(0.26 0.06 232 / 0.06), 0 12px 28px -18px oklch(0.26 0.06 232 / 0.35);
-  --shadow-lift: 0 2px 4px oklch(0.26 0.06 232 / 0.08), 0 26px 50px -26px oklch(0.26 0.06 232 / 0.45);
+  --shadow-card:
+    0 1px 2px oklch(0.26 0.06 232 / 0.06), 0 12px 28px -18px oklch(0.26 0.06 232 / 0.35);
+  --shadow-lift:
+    0 2px 4px oklch(0.26 0.06 232 / 0.08), 0 26px 50px -26px oklch(0.26 0.06 232 / 0.45);
 }
 
 .dark {
@@ -190,4 +192,36 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--accent);
+}
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+  .bc3-print-hide,
+  nav,
+  header,
+  footer {
+    display: none !important;
+  }
+  .bc3-member-table {
+    display: block !important;
+    overflow: visible !important;
+    border: 0 !important;
+  }
+  .bc3-member-table table {
+    width: 100%;
+    font-size: 9pt;
+  }
+  .bc3-member-table tr {
+    break-inside: avoid;
+  }
+  .bc3-member-table a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
 }

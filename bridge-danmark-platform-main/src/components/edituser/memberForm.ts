@@ -6,10 +6,14 @@ export type MemberForm = {
   memberNo: string;
   email: string;
   phone1: string;
+  phone2: string;
+  phone3: string;
   address1: string;
+  address2: string;
   zipCode: string;
   city: string;
   countryCode: string;
+  clubStart: string;
 };
 
 export const emptyForm: MemberForm = {
@@ -17,10 +21,14 @@ export const emptyForm: MemberForm = {
   memberNo: "",
   email: "",
   phone1: "",
+  phone2: "",
+  phone3: "",
   address1: "",
+  address2: "",
   zipCode: "",
   city: "",
   countryCode: "",
+  clubStart: "",
 };
 
 export function formFromMember(member: ClubMember): MemberForm {
@@ -29,10 +37,14 @@ export function formFromMember(member: ClubMember): MemberForm {
     memberNo: member.memberNo?.toString() ?? "",
     email: member.email ?? "",
     phone1: member.phone1 ?? "",
+    phone2: member.phone2 ?? "",
+    phone3: member.phone3 ?? "",
     address1: member.address1 ?? "",
+    address2: member.address2 ?? "",
     zipCode: member.zipCode ?? "",
     city: member.city ?? "",
     countryCode: member.countryCode ?? "",
+    clubStart: member.clubStart ?? "",
   };
 }
 
@@ -56,5 +68,8 @@ export async function refreshMemberQueries(
     queryClient.invalidateQueries({ queryKey: ["bc3", "clubMembers", fdbNo, clubId] }),
     queryClient.invalidateQueries({ queryKey: ["bc3", "members", fdbNo] }),
     queryClient.invalidateQueries({ queryKey: ["bc3", "memberclubs", fdbNo] }),
+    queryClient.invalidateQueries({ queryKey: ["bc3", "memberSearch", fdbNo] }),
+    queryClient.invalidateQueries({ queryKey: ["bc3", "administration", fdbNo] }),
+    queryClient.invalidateQueries({ queryKey: ["bc3", "memberHistory", fdbNo] }),
   ]);
 }

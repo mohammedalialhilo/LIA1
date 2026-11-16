@@ -61,6 +61,28 @@ export function MemberFields({
         maxLength={20}
       />
 
+      <label htmlFor="edituser-phone2">Telefon 2</label>
+      <input
+        id="edituser-phone2"
+        name="phone2"
+        type="tel"
+        value={form.phone2}
+        onChange={onChange}
+        placeholder="Valgfrit"
+        maxLength={20}
+      />
+
+      <label htmlFor="edituser-phone3">Telefon 3</label>
+      <input
+        id="edituser-phone3"
+        name="phone3"
+        type="tel"
+        value={form.phone3}
+        onChange={onChange}
+        placeholder="Valgfrit"
+        maxLength={20}
+      />
+
       <label htmlFor="edituser-address">Adresse</label>
       <input
         id="edituser-address"
@@ -68,6 +90,16 @@ export function MemberFields({
         value={form.address1}
         onChange={onChange}
         placeholder="Indtast adresse"
+        maxLength={40}
+      />
+
+      <label htmlFor="edituser-address2">Adresse 2</label>
+      <input
+        id="edituser-address2"
+        name="address2"
+        value={form.address2}
+        onChange={onChange}
+        placeholder="Valgfrit"
         maxLength={40}
       />
 
@@ -99,6 +131,15 @@ export function MemberFields({
         onChange={onChange}
         placeholder="F.eks. DK"
         maxLength={5}
+      />
+
+      <label htmlFor="edituser-club-start">Klubstart</label>
+      <input
+        id="edituser-club-start"
+        name="clubStart"
+        type="date"
+        value={form.clubStart}
+        onChange={onChange}
       />
     </>
   );

@@ -8,6 +8,6 @@ export const membersQueryOptions = (fdbNo: string) =>
     retry: false,
   });
 
-export function useMembers(fdbNo: string) {
-  return useQuery(membersQueryOptions(fdbNo));
+export function useMembers(fdbNo: string, enabled = true) {
+  return useQuery({ ...membersQueryOptions(fdbNo), enabled });
 }

@@ -41,10 +41,12 @@ Example PUT body:
 {"city":"Uppsala","phone1":"0701234567"}
 ```
 
-PUT changes only supplied non-null editable values; omitted and null values
-leave stored values unchanged. It cannot clear a value to SQL NULL. Member and
-club IDs, member number, point totals, and database-managed fields cannot be
-changed here.
+PUT changes only supplied editable values. Omitted values remain unchanged;
+explicit JSON `null` clears an optional field to SQL NULL. Supported fields
+include both address lines, country, postal code, city, all three telephone
+numbers, email and club start date. Name may be changed but cannot be cleared.
+Member and club IDs, member number, point totals, and database-managed fields
+cannot be changed here.
 
 The workspace `9999.FDB` already contains Firebird-native replacements for the
 member triggers that previously called `BC3UDF.dll`. They keep basic member

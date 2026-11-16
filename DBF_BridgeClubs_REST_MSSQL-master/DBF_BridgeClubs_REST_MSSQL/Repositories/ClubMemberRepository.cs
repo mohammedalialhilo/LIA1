@@ -302,21 +302,29 @@ public sealed class ClubMemberRepository
     {
         await using var connection = await OpenAsync(cancellationToken);
         await using var transaction = (FbTransaction)await connection.BeginTransactionAsync(cancellationToken);
-        if (await GetAsync(connection, transaction, clubId, memberId, cancellationToken) is null)
-            return null;
+        var original = await GetAsync(connection, transaction, clubId, memberId, cancellationToken);
+        if (original is null) return null;
 
         var changes = new List<(string Column, object Value)>();
-        if (input.Name is not null) changes.Add(("NAME", input.Name.Trim()));
-        if (input.Address1 is not null) changes.Add(("ADDRESS_1", input.Address1));
-        if (input.Address2 is not null) changes.Add(("ADDRESS_2", input.Address2));
-        if (input.CountryCode is not null) changes.Add(("COUNTRY_CODE", input.CountryCode));
-        if (input.ZipCode is not null) changes.Add(("ZIP_CODE", input.ZipCode));
-        if (input.City is not null) changes.Add(("CITY", input.City));
-        if (input.Phone1 is not null) changes.Add(("PHONE_1", input.Phone1));
-        if (input.Phone2 is not null) changes.Add(("PHONE_2", input.Phone2));
-        if (input.Phone3 is not null) changes.Add(("PHONE_3", input.Phone3));
-        if (input.Email is not null) changes.Add(("EMAIL", input.Email));
-        if (input.ClubStart is { } date) changes.Add(("CLUB_START", date.ToDateTime(TimeOnly.MinValue)));
+        void AddText(string column, OptionalString field, string? before)
+        {
+            if (!field.IsSpecified) return;
+            var after = string.IsNullOrWhiteSpace(field.Value) ? null : field.Value.Trim();
+            if (after != before) changes.Add((column, after ?? (object)DBNull.Value));
+        }
+        AddText("NAME", input.Name, original.Name);
+        AddText("ADDRESS_1", input.Address1, original.Address1);
+        AddText("ADDRESS_2", input.Address2, original.Address2);
+        AddText("COUNTRY_CODE", input.CountryCode, original.CountryCode);
+        AddText("ZIP_CODE", input.ZipCode, original.ZipCode);
+        AddText("CITY", input.City, original.City);
+        AddText("PHONE_1", input.Phone1, original.Phone1);
+        AddText("PHONE_2", input.Phone2, original.Phone2);
+        AddText("PHONE_3", input.Phone3, original.Phone3);
+        AddText("EMAIL", input.Email, original.Email);
+        if (input.ClubStart.IsSpecified && input.ClubStart.Value != original.ClubStart)
+            changes.Add(("CLUB_START", input.ClubStart.Value is { } date
+                ? date.ToDateTime(TimeOnly.MinValue) : DBNull.Value));
 
         if (changes.Count > 0)
         {
