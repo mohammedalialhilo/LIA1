@@ -16,6 +16,7 @@ import { SessionProvider } from "../lib/session";
 import { SiteHeader } from "../components/site/SiteHeader";
 import { SiteFooter } from "../components/site/SiteFooter";
 import { LoginDialog } from "../components/site/LoginDialog";
+import { Toaster } from "../components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -144,6 +145,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
         <LoginDialog />
+        <Toaster />
       </SessionProvider>
     </QueryClientProvider>
   );

@@ -19,6 +19,7 @@ import { useMembers } from "@/hooks/useMembers";
 import { useMemberClubs } from "@/hooks/useMemberClubs";
 import { byggMakkerpar } from "@/lib/bc3-memberships";
 import EditUser from "@/components/edituser/edituser";
+import { MembershipActions } from "@/components/edituser/MembershipActions";
 
 export const Route = createFileRoute("/bc3/online/$clubNumber/subclubs/$clubId")({
   validateSearch: (search: Record<string, unknown>): { editMemberId?: number } => {
@@ -108,13 +109,14 @@ function UnderklubDetalje() {
                 ) : underklubMedlemmer.length === 0 ? (
                   <Bc3Empty tekst="Ingen medlemmer er knyttet til denne underklub." />
                 ) : (
-                  <div className="overflow-hidden rounded-xl border border-border bg-card">
+                  <div className="overflow-x-auto rounded-xl border border-border bg-card">
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Medlemsnr.</TableHead>
                           <TableHead>Navn</TableHead>
                           <TableHead>By</TableHead>
+                          {fdbNo === "9999" && <TableHead>Handlinger</TableHead>}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -131,6 +133,36 @@ function UnderklubDetalje() {
                               </Link>
                             </TableCell>
                             <TableCell>{m.city}</TableCell>
+                            {fdbNo === "9999" && medlemsklubber.data && underklubber.data && (
+                              <TableCell>
+                                <MembershipActions
+                                  fdbNo={fdbNo}
+                                  memberId={m.memberID}
+                                  memberName={m.name}
+                                  memberNo={m.memberNo}
+                                  sourceClubId={underklub.clubID}
+                                  sourceClubName={underklub.clubName}
+                                  partnerName={
+                                    medlemmer.data?.find(
+                                      (person) =>
+                                        person.memberID ===
+                                        (medlemsklubber.data?.find(
+                                          (link) =>
+                                            link.memberID === m.memberID &&
+                                            link.clubID === underklub.clubID,
+                                        )?.partnerID ||
+                                          medlemsklubber.data?.find(
+                                            (link) =>
+                                              link.clubID === underklub.clubID &&
+                                              link.partnerID === m.memberID,
+                                          )?.memberID),
+                                    )?.name
+                                  }
+                                  memberClubs={medlemsklubber.data}
+                                  subClubs={underklubber.data}
+                                />
+                              </TableCell>
+                            )}
                           </TableRow>
                         ))}
                       </TableBody>

@@ -8,6 +8,7 @@ import { useMembers } from "@/hooks/useMembers";
 import { useMemberClubs } from "@/hooks/useMemberClubs";
 import { useSubClubs } from "@/hooks/useSubClubs";
 import { byggMedlemskaber } from "@/lib/bc3-memberships";
+import { MembershipActions } from "@/components/edituser/MembershipActions";
 
 export const Route = createFileRoute("/bc3/online/$clubNumber/members/$memberId")({
   head: () => ({
@@ -145,6 +146,21 @@ function MedlemDetalje() {
                           <p className="text-sm">Der er ikke registreret en fast makker.</p>
                         )}
                       </div>
+                      {fdbNo === "9999" && medlemsklubber.data && underklubber.data && (
+                        <div className="mt-3 border-t border-border/60 pt-3">
+                          <MembershipActions
+                            fdbNo={fdbNo}
+                            memberId={medlem.memberID}
+                            memberName={medlem.name}
+                            memberNo={medlem.memberNo}
+                            sourceClubId={ms.underklubId}
+                            sourceClubName={ms.underklubNavn}
+                            partnerName={ms.makkerstatus === "fundet" ? ms.makkerNavn : undefined}
+                            memberClubs={medlemsklubber.data}
+                            subClubs={underklubber.data}
+                          />
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

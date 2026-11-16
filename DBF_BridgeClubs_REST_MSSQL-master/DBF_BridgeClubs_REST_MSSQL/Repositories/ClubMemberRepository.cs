@@ -7,6 +7,16 @@ namespace DBF_BridgeClubs_REST_MSSQL.Repositories;
 public sealed class ClubMemberRepository
 {
     public enum AddExistingStatus { Created, ClubMissing, MemberMissing, AlreadyLinked }
+    public enum MembershipChangeStatus
+    {
+        Changed, SourceClubMissing, DestinationClubMissing, MemberMissing,
+        MembershipMissing, DestinationLinked, PartnerAttached, GroupAssigned, ConcurrentChange
+    }
+
+    public sealed record MembershipChangeResult(
+        MembershipChangeStatus Status, MemberClubLinkResponseDto? Link = null);
+
+    private sealed record MembershipRow(int Id, int? PartnerId, short? GroupIndex);
 
     private static string ConnectionString => FirebirdConnectionSettings.ConnectionString;
 
@@ -144,6 +154,97 @@ public sealed class ClubMemberRepository
             MemberId = memberId,
             ClubId = clubId,
         });
+    }
+
+    public async Task<MembershipChangeResult> ChangeMembershipAsync(
+        int sourceClubId, int memberId, int? destinationClubId, CancellationToken cancellationToken)
+    {
+        await using var connection = await OpenAsync(cancellationToken);
+        await using var transaction = (FbTransaction)await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted, cancellationToken);
+
+        if (!await ClubExistsAsync(connection, transaction, sourceClubId, cancellationToken))
+            return new(MembershipChangeStatus.SourceClubMissing);
+        if (destinationClubId is { } destinationForValidation &&
+            !await ClubExistsAsync(connection, transaction, destinationForValidation, cancellationToken))
+            return new(MembershipChangeStatus.DestinationClubMissing);
+        if (!await MemberExistsAsync(connection, transaction, memberId, cancellationToken))
+            return new(MembershipChangeStatus.MemberMissing);
+
+        MembershipRow? membership;
+        try
+        {
+            membership = await LockMembershipAsync(connection, transaction, sourceClubId, memberId, cancellationToken);
+        }
+        catch (FbException error) when (IsLockConflict(error))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return new(MembershipChangeStatus.ConcurrentChange);
+        }
+        if (membership is null) return new(MembershipChangeStatus.MembershipMissing);
+        if (membership.PartnerId is > 0 ||
+            await HasReversePartnerAsync(connection, transaction, sourceClubId, memberId, cancellationToken))
+            return new(MembershipChangeStatus.PartnerAttached);
+        if (membership.GroupIndex.GetValueOrDefault() != 0)
+            return new(MembershipChangeStatus.GroupAssigned);
+        if (destinationClubId is { } target &&
+            await LinkExistsAsync(connection, transaction, target, memberId, cancellationToken))
+            return new(MembershipChangeStatus.DestinationLinked);
+
+        var statement = destinationClubId is null
+            ? """
+                DELETE FROM MEM_MEMBER_CLUB
+                WHERE MEMBER_CLUB_ID = @linkId AND MEMBER_ID = @memberId AND CLUB_ID = @sourceClubId
+                  AND COALESCE(PARTNER_ID, 0) = 0 AND COALESCE(GROUP_INDEX, 0) = 0
+                  AND NOT EXISTS (SELECT 1 FROM MEM_MEMBER_CLUB P
+                                  WHERE P.CLUB_ID = @sourceClubId AND P.PARTNER_ID = @memberId)
+                """
+            : """
+                UPDATE MEM_MEMBER_CLUB
+                SET CLUB_ID = @destinationClubId,
+                    LAST_CHANGED_BY = 'REST API', LAST_CHANGED_DATE = CURRENT_TIMESTAMP
+                WHERE MEMBER_CLUB_ID = @linkId AND MEMBER_ID = @memberId AND CLUB_ID = @sourceClubId
+                  AND COALESCE(PARTNER_ID, 0) = 0 AND COALESCE(GROUP_INDEX, 0) = 0
+                  AND NOT EXISTS (SELECT 1 FROM MEM_MEMBER_CLUB P
+                                  WHERE P.CLUB_ID = @sourceClubId AND P.PARTNER_ID = @memberId)
+                  AND NOT EXISTS (SELECT 1 FROM MEM_MEMBER_CLUB D
+                                  WHERE D.CLUB_ID = @destinationClubId AND D.MEMBER_ID = @memberId)
+                """;
+        try
+        {
+            await using var command = new FbCommand(statement, connection);
+            command.Transaction = transaction;
+            command.Parameters.AddWithValue("@linkId", membership.Id);
+            command.Parameters.AddWithValue("@memberId", memberId);
+            command.Parameters.AddWithValue("@sourceClubId", sourceClubId);
+            if (destinationClubId is { } destinationForCommand)
+                command.Parameters.AddWithValue("@destinationClubId", destinationForCommand);
+            if (await command.ExecuteNonQueryAsync(cancellationToken) != 1)
+                return new(MembershipChangeStatus.ConcurrentChange);
+        }
+        catch (FbException error)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            await using var freshConnection = await OpenAsync(cancellationToken);
+            if (destinationClubId is { } destinationForConflict &&
+                await LinkExistsAsync(freshConnection, null, destinationForConflict, memberId, cancellationToken))
+                return new(MembershipChangeStatus.DestinationLinked);
+            if (!await LinkExistsAsync(freshConnection, null, sourceClubId, memberId, cancellationToken))
+                return new(MembershipChangeStatus.ConcurrentChange);
+            if (IsLockConflict(error)) return new(MembershipChangeStatus.ConcurrentChange);
+            throw;
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return new(MembershipChangeStatus.Changed,
+            destinationClubId is { } newClubId
+                ? new MemberClubLinkResponseDto
+                {
+                    MemberClubId = membership.Id,
+                    MemberId = memberId,
+                    ClubId = newClubId,
+                }
+                : null);
     }
 
     public async Task<(ClubMemberResponseDto? Member, bool Duplicate, bool ClubMissing)> CreateAsync(
@@ -284,6 +385,38 @@ public sealed class ClubMemberRepository
         return await command.ExecuteScalarAsync(cancellationToken) is not null;
     }
 
+    private static async Task<MembershipRow?> LockMembershipAsync(
+        FbConnection connection, FbTransaction transaction,
+        int clubId, int memberId, CancellationToken cancellationToken)
+    {
+        await using var command = new FbCommand("""
+            SELECT MEMBER_CLUB_ID, PARTNER_ID, GROUP_INDEX
+            FROM MEM_MEMBER_CLUB WHERE MEMBER_ID = @memberId AND CLUB_ID = @clubId WITH LOCK
+            """, connection);
+        command.Transaction = transaction;
+        command.Parameters.AddWithValue("@memberId", memberId);
+        command.Parameters.AddWithValue("@clubId", clubId);
+        await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow, cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken)) return null;
+        return new MembershipRow(reader.GetInt32(0),
+            reader.IsDBNull(1) ? null : reader.GetInt32(1),
+            reader.IsDBNull(2) ? null : reader.GetInt16(2));
+    }
+
+    private static async Task<bool> HasReversePartnerAsync(
+        FbConnection connection, FbTransaction transaction,
+        int clubId, int memberId, CancellationToken cancellationToken)
+    {
+        await using var command = new FbCommand("""
+            SELECT FIRST 1 1 FROM MEM_MEMBER_CLUB
+            WHERE CLUB_ID = @clubId AND PARTNER_ID = @memberId
+            """, connection);
+        command.Transaction = transaction;
+        command.Parameters.AddWithValue("@clubId", clubId);
+        command.Parameters.AddWithValue("@memberId", memberId);
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
     private static async Task<ClubMemberResponseDto?> GetAsync(
         FbConnection connection, FbTransaction? transaction,
         int clubId, int memberId, CancellationToken cancellationToken)
@@ -319,4 +452,8 @@ public sealed class ClubMemberRepository
 
     private static void Add(FbCommand command, string name, object? value) =>
         command.Parameters.AddWithValue(name, value ?? DBNull.Value);
+
+    private static bool IsLockConflict(FbException error) =>
+        error.SQLSTATE == "40001" ||
+        error.Message.Contains("lock conflict", StringComparison.OrdinalIgnoreCase);
 }

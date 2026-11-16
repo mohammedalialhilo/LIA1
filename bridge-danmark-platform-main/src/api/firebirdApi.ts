@@ -118,10 +118,12 @@ export type UpdateClubMember = Partial<
 
 export class Bc3ApiError extends Error {
   status?: number | undefined;
-  constructor(message: string, status?: number) {
+  code?: string | undefined;
+  constructor(message: string, status?: number, code?: string) {
     super(message);
     this.name = "Bc3ApiError";
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -141,9 +143,9 @@ async function apiGet<T>(path: string): Promise<T> {
 }
 
 async function apiWrite<T>(
-  method: "POST" | "PUT",
+  method: "POST" | "PUT" | "DELETE",
   path: string,
-  body: CreateClubMember | UpdateClubMember | { memberId: number },
+  body?: CreateClubMember | UpdateClubMember | { memberId: number } | { destinationClubId: number },
 ): Promise<T> {
   let res: Response;
   try {
@@ -151,17 +153,25 @@ async function apiWrite<T>(
       method,
       headers: {
         Accept: "application/json",
-        "Content-Type": "application/json",
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
-      body: JSON.stringify(body),
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   } catch {
     throw new Bc3ApiError("Kan ikke oprette forbindelse til BC3 API.");
   }
   if (!res.ok) {
-    throw new Bc3ApiError(`BC3 API svarede med fejl ${res.status}.`, res.status);
+    const details = (await res.json().catch(() => null)) as {
+      code?: string;
+      error?: string;
+    } | null;
+    throw new Bc3ApiError(
+      details?.error ?? `BC3 API svarede med fejl ${res.status}.`,
+      res.status,
+      details?.code,
+    );
   }
-  return (await res.json()) as T;
+  return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
 export function getClub(fdbNo: number | string) {
@@ -206,6 +216,27 @@ export function addExistingMemberToSubclub(
   return apiWrite<MemberClubLink>("POST", `${clubMembersPath(fdbNo, clubId)}/Existing`, {
     memberId,
   });
+}
+
+export function removeMemberFromSubclub(
+  fdbNo: number | string,
+  clubId: number | string,
+  memberId: number,
+) {
+  return apiWrite<void>("DELETE", `${clubMembersPath(fdbNo, clubId)}/${memberId}/Membership`);
+}
+
+export function transferMemberToSubclub(
+  fdbNo: number | string,
+  sourceClubId: number | string,
+  memberId: number,
+  destinationClubId: number,
+) {
+  return apiWrite<MemberClubLink>(
+    "POST",
+    `${clubMembersPath(fdbNo, sourceClubId)}/${memberId}/Transfer`,
+    { destinationClubId },
+  );
 }
 
 export function createClubMember(

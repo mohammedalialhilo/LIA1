@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  Bc3ApiError,
   addExistingMemberToSubclub,
   createClubMember,
   getClubMembers,
+  removeMemberFromSubclub,
   searchExistingMembers,
+  transferMemberToSubclub,
   updateClubMember,
 } from "./firebirdApi";
 
@@ -16,6 +19,47 @@ describe("club member API", () => {
 
     await expect(getClubMembers(9999, 2)).resolves.toEqual([]);
     expect(fetchMock.mock.calls[0]?.[0]).toMatch(/\/api\/Clubs\/9999\/SubClubs\/2\/Members$/);
+  });
+
+  it("removes a membership with DELETE and accepts the empty 204 response", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(removeMemberFromSubclub(9999, 2, 51)).resolves.toBeUndefined();
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/Clubs\/9999\/SubClubs\/2\/Members\/51\/Membership$/);
+    expect(init.method).toBe("DELETE");
+    expect(init.body).toBeUndefined();
+  });
+
+  it("transfers in one request and preserves machine readable conflicts", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ memberClubId: 7, memberId: 51, clubId: 3 }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ code: "partner_attached", error: "Makker registreret." }), {
+          status: 409,
+        }),
+      );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(transferMemberToSubclub(9999, 2, 51, 3)).resolves.toEqual({
+      memberClubId: 7,
+      memberId: 51,
+      clubId: 3,
+    });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/Clubs\/9999\/SubClubs\/2\/Members\/51\/Transfer$/);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({ destinationClubId: 3 });
+    await expect(transferMemberToSubclub(9999, 2, 51, 3)).rejects.toMatchObject<
+      Partial<Bc3ApiError>
+    >({
+      status: 409,
+      code: "partner_attached",
+    });
   });
 
   it("sends creation and updates without a write key", async () => {

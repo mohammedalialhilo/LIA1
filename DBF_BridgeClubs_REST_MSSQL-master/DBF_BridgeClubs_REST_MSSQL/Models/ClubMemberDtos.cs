@@ -83,3 +83,9 @@ public sealed class ExistingMemberSubclubDto
     public int ClubId { get; set; }
     public string ClubName { get; set; } = string.Empty;
 }
+
+public sealed class TransferClubMemberDto
+{
+    [Range(1, int.MaxValue)]
+    public int DestinationClubId { get; set; }
+}

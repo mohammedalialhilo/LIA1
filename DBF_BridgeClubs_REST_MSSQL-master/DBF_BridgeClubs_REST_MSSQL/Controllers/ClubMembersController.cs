@@ -60,6 +60,61 @@ public sealed class ClubMembersController(ClubMemberRepository repository) : Con
         };
     }
 
+    [HttpDelete("{memberId:int}/Membership")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RemoveMembership(
+        int fdbNo, int clubId, int memberId, CancellationToken cancellationToken)
+    {
+        if (fdbNo != 9999) return NotFound(new { code = "database_not_found" });
+        if (clubId <= 0 || memberId <= 0) return BadRequest(new { code = "invalid_id" });
+        var result = await repository.ChangeMembershipAsync(clubId, memberId, null, cancellationToken);
+        return result.Status == ClubMemberRepository.MembershipChangeStatus.Changed
+            ? NoContent()
+            : MembershipChangeError(result.Status);
+    }
+
+    [HttpPost("{memberId:int}/Transfer")]
+    [ProducesResponseType(typeof(MemberClubLinkResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> TransferMembership(
+        int fdbNo, int clubId, int memberId, [FromBody] TransferClubMemberDto input,
+        CancellationToken cancellationToken)
+    {
+        if (fdbNo != 9999) return NotFound(new { code = "database_not_found" });
+        if (clubId <= 0 || memberId <= 0) return BadRequest(new { code = "invalid_id" });
+        if (clubId == input.DestinationClubId)
+            return BadRequest(new { code = "same_subclub", error = "Vælg en anden underklub." });
+        var result = await repository.ChangeMembershipAsync(
+            clubId, memberId, input.DestinationClubId, cancellationToken);
+        return result.Status == ClubMemberRepository.MembershipChangeStatus.Changed
+            ? Ok(result.Link)
+            : MembershipChangeError(result.Status);
+    }
+
+    private IActionResult MembershipChangeError(ClubMemberRepository.MembershipChangeStatus status) => status switch
+    {
+        ClubMemberRepository.MembershipChangeStatus.SourceClubMissing =>
+            NotFound(new { code = "source_subclub_not_found", error = "Underklubben blev ikke fundet." }),
+        ClubMemberRepository.MembershipChangeStatus.DestinationClubMissing =>
+            NotFound(new { code = "destination_subclub_not_found", error = "Målunderklubben blev ikke fundet." }),
+        ClubMemberRepository.MembershipChangeStatus.MemberMissing =>
+            NotFound(new { code = "member_not_found", error = "Medlemmet blev ikke fundet." }),
+        ClubMemberRepository.MembershipChangeStatus.MembershipMissing =>
+            NotFound(new { code = "membership_not_found", error = "Medlemmet er ikke tilknyttet underklubben." }),
+        ClubMemberRepository.MembershipChangeStatus.DestinationLinked =>
+            Conflict(new { code = "destination_already_linked", error = "Medlemmet er allerede tilknyttet målunderklubben." }),
+        ClubMemberRepository.MembershipChangeStatus.PartnerAttached =>
+            Conflict(new { code = "partner_attached", error = "Medlemmet har en makker i underklubben. Fjern makkerforholdet i BC3 først." }),
+        ClubMemberRepository.MembershipChangeStatus.GroupAssigned =>
+            Conflict(new { code = "group_assigned", error = "Medlemmet er tilknyttet en gruppe. Fjern gruppetilknytningen i BC3 først." }),
+        _ => Conflict(new { code = "membership_changed", error = "Medlemskabet blev ændret undervejs. Opdatér siden og prøv igen." }),
+    };
+
     [HttpPost]
     [ProducesResponseType(typeof(ClubMemberResponseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
